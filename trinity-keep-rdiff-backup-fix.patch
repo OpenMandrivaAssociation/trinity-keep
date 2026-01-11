@@ -1,0 +1,85 @@
+diff --git a/keep/common/rdbmanager.cpp b/keep/common/rdbmanager.cpp
+index 2eb2f67..dd65de3 100644
+--- a/keep/common/rdbmanager.cpp
++++ b/keep/common/rdbmanager.cpp
+@@ -55,7 +55,7 @@ TQString RDBManager::compareAtTime(Backup backup, TQDateTime date)
+ 	// Gets the rdiff-backup process
+ 	TDEProcess *proc = RDBProcess();
+ 	// Adds the options
+-	*proc << "--compare-at-time";
++	*proc << "compare --at";
+ 	*proc << TQString::number(date.toTime_t()); // increment date
+ 	// Adds source and dest
+ 	*proc << TQString(TQFile::encodeName(TDEProcess::quote(backup.source())));
+@@ -83,7 +83,7 @@ TQString RDBManager::listChangedSince(Backup backup, TQDateTime date)
+ 	// Gets the rdiff-backup process
+ 	TDEProcess *proc = RDBProcess();
+ 	// Adds the options
+-	*proc << "--list-changed-since";
++	*proc << "list files --changed-since";
+ 	*proc << TQString::number(date.toTime_t()); // increment date
+ 	// Adds the dest
+ 	*proc << TQString(TQFile::encodeName(TDEProcess::quote(backup.dest())));
+@@ -110,7 +110,7 @@ TQString RDBManager::listAtTime(Backup backup, TQDateTime date)
+ 	// Gets the rdiff-backup process
+ 	TDEProcess *proc = RDBProcess();
+ 	// Adds the options
+-	*proc << "--list-at-time";
++	*proc << "list files --at";
+ 	*proc << TQString::number(date.toTime_t()); // increment date
+ 	// Adds the dest
+ 	*proc << TQString(TQFile::encodeName(TDEProcess::quote(backup.dest())));
+@@ -137,7 +137,7 @@ TQValueList<TQDateTime> RDBManager::incrementList(Backup backup)
+ 	// Gets the rdiff-backup process
+ 	TDEProcess *proc = RDBProcess();
+ 	// Adds the options
+-	*proc << "--list-increments";
++	*proc << "list increments";
+ 	*proc << "-v2";
+ 	*proc << "--parsable-output";
+ 	// Adds the dest
+@@ -206,8 +206,8 @@ void RDBManager::slotRestoreBackup(Backup backup,TQDateTime time)
+ 	// Gets the rdiff-backup process
+ 	TDEProcess *proc = RDBProcess();
+ 	// Adds the options
+-	*proc << "--force";
+-	*proc << "--restore-as-of";
++	*proc << "restore --at";
++	//*proc << "--restore-as-of";
+ 	*proc << TQString::number(time.toTime_t()); // Date of the increment to restore
+ 	// Adds source and dest
+ 	*proc << TQString(TQFile::encodeName(TDEProcess::quote(backup.dest())));
+@@ -284,6 +284,7 @@ void RDBManager::doBackup(Backup backup)
+ {
+ 	// Gets the rdiff-backup process
+ 	TDEProcess *proc = RDBProcess(KeepSettings::controlRDBPriority,KeepSettings::rDBPriority());
++	*proc << "backup";
+ 	// Adds include and exclude
+ 	if ( backup.useIncludeExclude() )
+ 	{
+@@ -309,8 +310,14 @@ void RDBManager::doBackup(Backup backup)
+ 	// For simple mode
+ 	if ( !backup.useAdvancedConfig() )
+ 	{
+-		if ( !backup.useCompression() )
+-			*proc << "--no-compression";
++	  if ( backup.useCompression() )
++	  {
++	    *proc << "--compression";
++	  }
++	  else 
++	  {
++		  *proc << "--no-compression";
++		}
+ 	
+ 		if ( backup.excludeSpecialFiles() )
+ 			*proc << "--exclude-special-files";
+@@ -360,7 +367,7 @@ void RDBManager::removeOldIncrements(Backup backup)
+ 	// Gets the rdiff-backup process
+ 	TDEProcess *proc = RDBProcess();
+ 	// Adds the options
+-	*proc << "--remove-older-than" << TQString("%1").arg(backup.deleteAfter()) + "D";
++	*proc << "remove increments --older-than" << TQString("%1").arg(backup.deleteAfter()) + "D";
+ 	// Adds dest
+ 	*proc << backup.dest();
+ 	// Starts the process
